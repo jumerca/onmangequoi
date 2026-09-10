@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
         settings.setSupportZoom(false);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setUserAgentString(settings.getUserAgentString() + " JurisPilot/1.0");
+        settings.setUserAgentString(settings.getUserAgentString() + " JurisPilot/2.0");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -77,7 +77,7 @@ public class MainActivity extends Activity {
         });
 
         if (savedInstanceState == null) {
-            webView.loadUrl("file:///android_asset/index.html");
+            webView.loadUrl("file:///android_asset/v2.html");
         } else {
             webView.restoreState(savedInstanceState);
         }
