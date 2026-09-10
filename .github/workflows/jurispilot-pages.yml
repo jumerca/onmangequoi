@@ -5,6 +5,7 @@ on:
     branches: [jurispilot-build]
     paths:
       - 'jurispilot/**'
+      - 'app/src/main/assets/v3.html'
       - '.github/workflows/jurispilot-pages.yml'
   workflow_dispatch:
 
@@ -12,11 +13,10 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  actions: read
 
 concurrency:
   group: jurispilot-pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -31,10 +31,12 @@ jobs:
           ref: jurispilot-build
       - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Upload JurisPilot site
+        with:
+          enablement: true
+      - name: Upload site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: jurispilot
+          path: '.'
       - name: Deploy JurisPilot
         id: deployment
         uses: actions/deploy-pages@v4
