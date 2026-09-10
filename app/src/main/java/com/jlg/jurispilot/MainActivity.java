@@ -24,10 +24,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(Color.rgb(10, 23, 48));
         getWindow().setNavigationBarColor(Color.rgb(8, 19, 38));
-
         webView = new WebView(this);
         setContentView(webView);
-
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -39,69 +37,26 @@ public class MainActivity extends Activity {
         settings.setSupportZoom(false);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setUserAgentString(settings.getUserAgentString() + " JurisPilot/2.0");
-
+        settings.setUserAgentString(settings.getUserAgentString() + " JurisPilot/3.0");
         webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                Uri uri = request.getUrl();
-                String scheme = uri.getScheme();
-                if ("http".equals(scheme) || "https".equals(scheme)) {
-                    try {
-                        startActivity(new Intent(Intent.ACTION_VIEW, uri));
-                    } catch (ActivityNotFoundException e) {
-                        Toast.makeText(MainActivity.this, "Impossible d’ouvrir ce lien", Toast.LENGTH_SHORT).show();
-                    }
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri=request.getUrl();String scheme=uri.getScheme();
+                if("http".equals(scheme)||"https".equals(scheme)){
+                    try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}
+                    catch(ActivityNotFoundException e){Toast.makeText(MainActivity.this,"Impossible d’ouvrir ce lien",Toast.LENGTH_SHORT).show();}
                     return true;
-                }
-                return false;
+                }return false;
             }
         });
-
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallbackNew, FileChooserParams fileChooserParams) {
-                if (filePathCallback != null) filePathCallback.onReceiveValue(null);
-                filePathCallback = filePathCallbackNew;
-                Intent intent = fileChooserParams.createIntent();
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                try {
-                    startActivityForResult(intent, FILE_CHOOSER_REQUEST);
-                    return true;
-                } catch (ActivityNotFoundException e) {
-                    filePathCallback = null;
-                    Toast.makeText(MainActivity.this, "Sélecteur de fichiers indisponible", Toast.LENGTH_SHORT).show();
-                    return false;
-                }
+        webView.setWebChromeClient(new WebChromeClient(){
+            @Override public boolean onShowFileChooser(WebView w,ValueCallback<Uri[]> cb,FileChooserParams p){
+                if(filePathCallback!=null)filePathCallback.onReceiveValue(null);filePathCallback=cb;Intent intent=p.createIntent();intent.addCategory(Intent.CATEGORY_OPENABLE);
+                try{startActivityForResult(intent,FILE_CHOOSER_REQUEST);return true;}catch(ActivityNotFoundException e){filePathCallback=null;return false;}
             }
         });
-
-        if (savedInstanceState == null) {
-            webView.loadUrl("file:///android_asset/v2.html");
-        } else {
-            webView.restoreState(savedInstanceState);
-        }
+        if(savedInstanceState==null)webView.loadUrl("file:///android_asset/v3.html");else webView.restoreState(savedInstanceState);
     }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == FILE_CHOOSER_REQUEST && filePathCallback != null) {
-            Uri[] results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-            filePathCallback.onReceiveValue(results);
-            filePathCallback = null;
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        if (webView != null) webView.saveState(outState);
-        super.onSaveInstanceState(outState);
-    }
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){super.onActivityResult(requestCode,resultCode,data);if(requestCode==FILE_CHOOSER_REQUEST&&filePathCallback!=null){filePathCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode,data));filePathCallback=null;}}
+    @Override public void onBackPressed(){if(webView!=null&&webView.canGoBack())webView.goBack();else super.onBackPressed();}
+    @Override protected void onSaveInstanceState(Bundle outState){if(webView!=null)webView.saveState(outState);super.onSaveInstanceState(outState);}
 }
