@@ -1,0 +1,13 @@
+{
+  "name": "JurisPilot",
+  "short_name": "JurisPilot",
+  "description": "Assistant d'information juridique : textes, conventions, jurisprudence et réponses argumentées.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fa",
+  "theme_color": "#09172f",
+  "icons": [
+    {"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
