@@ -1,4 +1,4 @@
-name: Build JurisPilot V2 APK
+name: Build JurisPilot V3 APK
 
 on:
   push:
@@ -23,9 +23,9 @@ jobs:
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk JurisPilot-v2.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk JurisPilot-v3.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: JurisPilot-V2-APK
-          path: JurisPilot-v2.apk
+          name: JurisPilot-V3-APK
+          path: JurisPilot-v3.apk
           retention-days: 30
