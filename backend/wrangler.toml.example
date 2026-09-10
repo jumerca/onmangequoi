@@ -1,0 +1,10 @@
+name = "jurispilot-engine"
+main = "worker.js"
+compatibility_date = "2026-09-10"
+
+# Secrets à configurer côté serveur uniquement :
+# OPENAI_API_KEY
+# Futur renforcement API officielles directes :
+# PISTE_CLIENT_ID
+# PISTE_CLIENT_SECRET
+# JUDILIBRE_KEY_ID
