@@ -1,0 +1,104 @@
+name: Deploy JurisPilot backend
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify required secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing CLOUDFLARE_API_TOKEN"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; }
+          test -n "$OPENAI_API_KEY" || { echo "Missing OPENAI_API_KEY"; exit 1; }
+
+      - name: Install Wrangler
+        run: npm install --no-save wrangler@latest
+
+      - name: Find or create D1 database
+        id: d1
+        shell: bash
+        run: |
+          set -euo pipefail
+          find_db() {
+            npx wrangler d1 list --json | jq -r '.[] | select(.name=="jurispilot-sync") | (.uuid // .id // empty)' | head -n1
+          }
+          DB_ID="$(find_db)"
+          if [ -z "$DB_ID" ]; then
+            npx wrangler d1 create jurispilot-sync --location weur
+            DB_ID="$(find_db)"
+          fi
+          test -n "$DB_ID" || { echo "Unable to resolve D1 database id"; exit 1; }
+          echo "db_id=$DB_ID" >> "$GITHUB_OUTPUT"
+          echo "D1 database ready"
+
+      - name: Generate Wrangler config
+        shell: bash
+        run: |
+          cat > backend/wrangler.toml <<EOF
+          name = "jurispilot-engine"
+          main = "worker.js"
+          compatibility_date = "2026-09-10"
+          workers_dev = true
+
+          [[d1_databases]]
+          binding = "DB"
+          database_name = "jurispilot-sync"
+          database_id = "${{ steps.d1.outputs.db_id }}"
+          EOF
+
+      - name: Apply D1 schema
+        run: npx wrangler d1 execute DB --remote --file=backend/schema.sql --config backend/wrangler.toml --yes
+
+      - name: Deploy Worker shell
+        run: npx wrangler deploy --config backend/wrangler.toml
+
+      - name: Store OpenAI key as Worker secret
+        shell: bash
+        run: printf '%s' "$OPENAI_API_KEY" | npx wrangler secret put OPENAI_API_KEY --config backend/wrangler.toml
+
+      - name: Deploy final Worker
+        id: deploy
+        shell: bash
+        run: |
+          set -o pipefail
+          npx wrangler deploy --config backend/wrangler.toml 2>&1 | tee deploy.log
+          URL="$(grep -Eo 'https://[^[:space:]]+\.workers\.dev' deploy.log | tail -n1 || true)"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          if [ -n "$URL" ]; then echo "JurisPilot endpoint: $URL"; fi
+
+      - name: Health check
+        if: steps.deploy.outputs.url != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --retry 5 --retry-delay 3 "${{ steps.deploy.outputs.url }}/health" | tee health.json
+          jq -e '.ok == true and .engine == "ready" and .sync == "ready"' health.json >/dev/null
+
+      - name: Deployment summary
+        shell: bash
+        run: |
+          echo "## JurisPilot backend" >> "$GITHUB_STEP_SUMMARY"
+          echo "- D1: jurispilot-sync" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Worker: jurispilot-engine" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${{ steps.deploy.outputs.url }}" ]; then
+            echo "- Endpoint: ${{ steps.deploy.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "- Expected health: engine=ready, sync=ready" >> "$GITHUB_STEP_SUMMARY"
