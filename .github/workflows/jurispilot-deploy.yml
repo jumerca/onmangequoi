@@ -2,6 +2,10 @@ name: Deploy JurisPilot backend
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ jurispilot-build ]
+    paths:
+      - 'backend/deploy-trigger.txt'
 
 permissions:
   contents: read
