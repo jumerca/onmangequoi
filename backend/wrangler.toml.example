@@ -2,9 +2,18 @@ name = "jurispilot-engine"
 main = "worker.js"
 compatibility_date = "2026-09-10"
 
-# Secrets à configurer côté serveur uniquement :
+# Secret serveur obligatoire :
 # OPENAI_API_KEY
-# Futur renforcement API officielles directes :
+# Ajouter avec : wrangler secret put OPENAI_API_KEY
+
+# Base D1 pour la synchronisation téléphone/tablette.
+# Créer la base, appliquer schema.sql puis remplacer l'identifiant ci-dessous.
+[[d1_databases]]
+binding = "DB"
+database_name = "jurispilot-sync"
+database_id = "REMPLACEZ_PAR_VOTRE_DATABASE_ID"
+
+# Renforcement futur possible avec les API officielles directes :
 # PISTE_CLIENT_ID
 # PISTE_CLIENT_SECRET
 # JUDILIBRE_KEY_ID
