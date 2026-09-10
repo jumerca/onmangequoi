@@ -1,0 +1,32 @@
+name: Test JurisPilot Web Link
+
+on:
+  push:
+    branches: [jurispilot-build]
+    paths:
+      - 'jurispilot/**'
+      - '.github/workflows/jurispilot-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test raw.githack web app
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://raw.githack.com/jumerca/onmangequoi/jurispilot-build/jurispilot'
+          curl -fsSL -D /tmp/index.headers "$BASE/index.html" -o /tmp/index.html
+          curl -fsSL -D /tmp/manifest.headers "$BASE/manifest.webmanifest" -o /tmp/manifest.webmanifest
+          curl -fsSL -D /tmp/sw.headers "$BASE/sw.js" -o /tmp/sw.js
+          grep -qi '^content-type: text/html' /tmp/index.headers
+          grep -q 'JurisPilot' /tmp/index.html
+          grep -q 'Analyser avec ChatGPT' /tmp/index.html
+          grep -q '"display": "standalone"' /tmp/manifest.webmanifest
+          grep -q 'serviceWorker' /tmp/index.html
+          echo 'JurisPilot web endpoint OK'
+          echo "URL: $BASE/index.html"
